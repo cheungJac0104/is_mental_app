@@ -1,0 +1,55 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "backend-service-dd781",
+          "appId": "1:63834150898:android:eea28cbb48a6718be5fd6b",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "backend-service-dd781",
+          "appId": "1:63834150898:ios:67960bd720935ceae5fd6b",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "backend-service-dd781",
+          "appId": "1:63834150898:ios:67960bd720935ceae5fd6b",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "backend-service-dd781",
+          "configurations": {
+            "android": "1:63834150898:android:eea28cbb48a6718be5fd6b",
+            "ios": "1:63834150898:ios:67960bd720935ceae5fd6b",
+            "macos": "1:63834150898:ios:67960bd720935ceae5fd6b",
+            "web": "1:63834150898:web:ecc5201d278ade43e5fd6b",
+            "windows": "1:63834150898:web:d3064ff40afd3778e5fd6b"
+          }
+        }
+      }
+    }
+  },
+  "emulators": {
+    "dataconnect": {
+      "dataDir": "dataconnect/.dataconnect/pgliteData",
+      "port": 9399
+    },
+    "ui": {
+      "enabled": true,
+      "port": 9400
+    },
+    "singleProjectMode": true
+  },
+  "dataconnect": {
+    "source": "dataconnect"
+  }
+}

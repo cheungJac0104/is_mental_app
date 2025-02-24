@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "63834150898",
+    "firebase_url": "https://backend-service-dd781-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "backend-service-dd781",
+    "storage_bucket": "backend-service-dd781.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63834150898:android:eea28cbb48a6718be5fd6b",
+        "android_client_info": {
+          "package_name": "com.example.is_mb_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-52XZ0Tw1HHAUOnVcUnLpbGcmpOngQcE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
