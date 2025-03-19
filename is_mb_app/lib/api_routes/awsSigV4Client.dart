@@ -1,18 +1,19 @@
 import 'package:aws_common/aws_common.dart';
 import 'package:aws_signature_v4/aws_signature_v4.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AwsSigV4Client {
   final AWSSigV4Signer _signer;
 
   // AWS credentials and region
-  static const String _accessKey = '';
-  static const String _secretKey = '';
+  static final String _accessKey = dotenv.env['AWS_ACCESS_KEY_ID'] ?? '';
+  static final String _secretKey = dotenv.env['AWS_SECRET_ACCESS_KEY'] ?? '';
   static const String _region = 'us-east-1';
   static const AWSService _service = AWSService('execute-api');
 
   AwsSigV4Client()
-      : _signer = const AWSSigV4Signer(
+      : _signer = AWSSigV4Signer(
           credentialsProvider:
               AWSCredentialsProvider(AWSCredentials(_accessKey, _secretKey)),
         );

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'screen_layouts/login_screen.dart';
 import 'screen_layouts/register_screen.dart';
 import 'screen_layouts/tailwind.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load();
   runApp(const MyApp());
 }
 
