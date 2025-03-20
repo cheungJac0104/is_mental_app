@@ -1,27 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../api_routes/api_service.dart';
+import '../services/validation_service.dart';
 import 'tailwind.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  RegisterScreenState createState() => RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final ApiService _apiService = ApiService();
+  late ApiService _apiService;
+  final _validationService = ValidationService();
+  String? _emailError;
+  bool _isFormValid = true;
+  bool _isLoading = false;
+
+  void _validateEmail(String value) {
+    final error =
+        _validationService.validateEmail(value); // Your validation logic
+    setState(() {
+      _emailError = error; // Update the error message
+      _isFormValid = error == null;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = Provider.of<ApiService>(context, listen: false);
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> _register() async {
     final username = _usernameController.text;
     final email = _emailController.text;
     final password = _passwordController.text;
 
+    _isLoading = true;
+
     if (username.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
@@ -29,18 +62,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final response = await _apiService.register(
           username: username, email: email, password: password);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && mounted) {
         // Handle successful registration
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registration successful')),
-        );
-        // Navigate to the login screen or perform other actions
-        Navigator.pop(context);
+        var body = _apiService.responseBodyParse(response);
+        final int statusCode = body['statusCode'] as int;
+        final String bodyString = body['body'].toString();
+
+        var bodyJson = _apiService.jsonBodyParse(bodyString);
+        // Extract the message and token
+        final String message = bodyJson['message'].toString();
+
+        if (statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Navigate to the login screen or perform other actions
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      _isLoading = false;
     }
   }
 
@@ -48,44 +102,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Register'),
+        title: const Text('Register'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(TwSizes.p4),
+        padding: const EdgeInsets.all(TwSizes.p4),
         child: Column(
           children: [
             TwTextField(
               controller: _usernameController,
               labelText: 'Username',
               hintText: 'Enter your username',
-              prefixIcon: Icon(Icons.person),
+              prefixIcon: const Icon(Icons.person),
             ),
-            SizedBox(height: TwSizes.p4),
+            const SizedBox(height: TwSizes.p4),
             TwTextField(
               controller: _emailController,
               labelText: 'Email',
               hintText: 'Enter your email',
-              prefixIcon: Icon(Icons.email),
+              prefixIcon: const Icon(Icons.email),
+              onChanged: _validateEmail, // Callback for text changes
+              errorText: _emailError, // Pass the error message
             ),
-            SizedBox(height: TwSizes.p4),
+            const SizedBox(height: TwSizes.p4),
             TwTextField(
               controller: _passwordController,
               labelText: 'Password',
               hintText: 'Enter your password',
               obscureText: true,
-              prefixIcon: Icon(Icons.key),
+              prefixIcon: const Icon(Icons.key),
             ),
-            SizedBox(height: TwSizes.p4),
+            const SizedBox(height: TwSizes.p4),
             TwButton(
-              onPressed: _register,
-              child: Text('Register'),
+              onPressed: !_isFormValid
+                  ? () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('Please fix the errors before submitting.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  : () async {
+                      await _register();
+                    },
+              child: _isLoading
+                  ? const CircularProgressIndicator()
+                  : const Text('Register'),
             ),
-            SizedBox(height: TwSizes.p4),
+            const SizedBox(height: TwSizes.p4),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('Already have an account? Login'),
+              child: const Text('Already have an account? Login'),
             ),
           ],
         ),

@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:aws_common/aws_common.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
-import 'awsSigV4Client.dart'; // Import the AwsSigV4Client
+import 'aws_sig_v4_client.dart'; // Import the AwsSigV4Client
 import 'package:bcrypt/bcrypt.dart';
 import 'dart:io';
 
@@ -115,4 +117,13 @@ class ApiService {
       },
     );
   }
+
+  Map<String, dynamic> responseBodyParse(Response response) {
+    final responseBody = jsonEncode(response.data);
+    debugPrint('Response Body: $responseBody');
+    return jsonDecode(responseBody);
+  } // Add this line to get the response body
+
+  Map<String, dynamic> jsonBodyParse(String jsonString) =>
+      jsonDecode(jsonString);
 }

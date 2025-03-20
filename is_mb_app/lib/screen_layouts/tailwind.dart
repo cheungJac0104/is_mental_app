@@ -8,16 +8,36 @@ class TwSizes {
   static const double p4 = 16.0;
   static const double p5 = 20.0;
   static const double p6 = 24.0;
+  static const double p7 = 28.0;
   static const double p8 = 32.0;
   static const double p10 = 40.0;
 }
 
+extension ThemeExtension on BuildContext {
+  TwColors get twColors => Theme.of(this).extension<TwColors>()!;
+  TwTextStyles get twTextStyles => Theme.of(this).extension<TwTextStyles>()!;
+}
+
 class TwColors {
-  static final MaterialColor primary =
-      createMaterialColor(TW3Colors.blue.shade600);
-  static final Color secondary = TW3Colors.gray.shade600;
-  static final Color background = TWUIColors.cool_gray.shade50!;
-  static final Color text = TW3Colors.gray.shade800;
+  static MaterialColor primary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? createMaterialColor(TW3Colors.blue.shade400)
+          : createMaterialColor(TW3Colors.blue.shade600);
+
+  static Color secondary(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? TW3Colors.gray.shade400
+          : TW3Colors.gray.shade600;
+
+  static Color background(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? TWUIColors.cool_gray.shade900
+          : TWUIColors.cool_gray.shade50!;
+
+  static Color text(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? TW3Colors.gray.shade100
+          : TW3Colors.gray.shade800;
 }
 
 MaterialColor createMaterialColor(Color color) {
@@ -43,27 +63,29 @@ MaterialColor createMaterialColor(Color color) {
 }
 
 class TwTextStyles {
-  static TextStyle heading1 = TextStyle(
-    fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: TwColors.text,
-  );
+  static TextStyle heading1(BuildContext context) => TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: TwColors.text(context),
+      );
 
-  static TextStyle body = TextStyle(
-    fontSize: 16,
-    color: TwColors.text,
-  );
+  static TextStyle body(BuildContext context) => TextStyle(
+        fontSize: 16,
+        color: TwColors.text(context),
+      );
 }
 
 class TwTextField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final String hintText;
+  final String? errorText;
   final bool obscureText;
   final TextInputType keyboardType;
   final Color? borderColor;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
+  final ValueChanged<String>? onChanged;
 
   const TwTextField({
     required this.controller,
@@ -74,8 +96,10 @@ class TwTextField extends StatelessWidget {
     this.borderColor,
     this.prefixIcon,
     this.suffixIcon,
-    Key? key,
-  }) : super(key: key);
+    this.onChanged,
+    this.errorText,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +107,7 @@ class TwTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
@@ -96,12 +121,13 @@ class TwTextField extends StatelessWidget {
             width: 2.0,
           ),
         ),
-        contentPadding: EdgeInsets.symmetric(
+        contentPadding: const EdgeInsets.symmetric(
           vertical: 12.0,
           horizontal: 16.0,
         ),
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
+        errorText: errorText,
       ),
     );
   }
@@ -126,8 +152,8 @@ class TwButton extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
     this.isLoading = false,
     this.icon,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -149,10 +175,47 @@ class TwButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (icon != null) icon!,
-                if (icon != null) SizedBox(width: 8.0),
+                if (icon != null) const SizedBox(width: 8.0),
                 child,
               ],
             ),
     );
   }
+}
+
+// Add centralized layout utility classes
+class TwLayout {
+  static Widget centerHorizontal(Widget child) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [child],
+    );
+  }
+
+  static Widget centerVertical(Widget child) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [child],
+    );
+  }
+
+  static EdgeInsets symmetricPadding({
+    double horizontal = 0,
+    double vertical = 0,
+  }) {
+    return EdgeInsets.symmetric(
+      horizontal: horizontal,
+      vertical: vertical,
+    );
+  }
+
+  static EdgeInsets allPadding(double size) {
+    return EdgeInsets.all(size);
+  }
+}
+
+class TwBreakpoints {
+  static double mobile = 600;
+  static double tablet = 900;
+  static double desktop = 1200;
 }
