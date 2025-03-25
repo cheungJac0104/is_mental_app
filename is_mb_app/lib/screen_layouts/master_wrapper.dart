@@ -86,7 +86,7 @@ class MainWrapperState extends State<MainWrapper> {
       items: [
         _buildNavItem(Icons.home, 'Home'),
         _buildNavItem(Icons.people, 'Community'),
-        _buildNavItem(Icons.emoji_emotions, 'Mood Check'),
+        _buildNavItem(Icons.emoji_emotions, 'Mood Check-In'),
         _buildNavItem(Icons.analytics, 'Stats'),
         _buildNavItem(Icons.person, 'Profile'),
       ],

@@ -1,0 +1,21 @@
+{
+    "moods": [
+      {"emoji": "😊", "label": "Happy"},
+      {"emoji": "😢", "label": "Sad"},
+      {"emoji": "😡", "label": "Angry"},
+      {"emoji": "😨", "label": "Anxious"},
+      {"emoji": "😴", "label": "Tired"},
+      {"emoji": "😃", "label": "Excited"},
+      {"emoji": "😕", "label": "Confused"},
+      {"emoji": "😌", "label": "Peaceful"},
+      {"emoji": "🤩", "label": "Grateful"},
+      {"emoji": "😞", "label": "Disappointed"}
+    ],
+    "intensityLevels": 5,
+    "keywords": [
+      "Work", "School", "Family", "Friends", "Relationship",
+      "Health", "Finance", "Weather", "Alone time", "Social event",
+      "Exercise", "Meal", "Hobby", "Travel", "News",
+      "Creativity", "Achievement", "Conflict", "Unexpected event"
+    ]
+  }

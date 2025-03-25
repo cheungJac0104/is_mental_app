@@ -14,7 +14,7 @@ class AuthService {
         DateTime.now().millisecondsSinceEpoch + expiresIn * 1000);
   }
 
-  void saveTokenUserInfo(String token) async {
+  Future<void> saveTokenUserInfo(String token) async {
     Map<String, dynamic> payload = JwtDecoder.decode(token);
     //debugPrint(payload.toString());
     // Extract user information
@@ -29,7 +29,11 @@ class AuthService {
 
   // Get token
   Future<String?> getToken() async {
-    return await _prefs.getString('auth_token');
+    return _prefs.getString('auth_token');
+  }
+
+  Future<String?> getItem(String key) async {
+    return _prefs.getString(key);
   }
 
   // Check if token is expired

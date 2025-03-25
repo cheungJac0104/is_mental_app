@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:is_mb_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../partical_layouts/bubble_background.dart';
 import '../partical_layouts/loading_screen.dart';
 import 'tailwind.dart';
 
@@ -14,6 +17,7 @@ class HomeScreenState extends State<HomeScreen> {
   late DateTime _selectedDate;
   String _dailyChallenge = "Loading challenge...";
   String _encouragementPhrase = "You're awesome!";
+  late AuthService authService;
 
   final List<String> _encouragementPhrases = [
     "You're doing great!",
@@ -29,6 +33,7 @@ class HomeScreenState extends State<HomeScreen> {
     _selectedDate = DateTime.now();
     _fetchDailyChallenge();
     _fetchEncouragement();
+    authService = Provider.of<AuthService>(context, listen: false);
   }
 
   // Mock API call for daily challenge
@@ -98,29 +103,58 @@ class HomeScreenState extends State<HomeScreen> {
       return const LoadingScreen();
     }
 
+    return FutureBuilder<String?>(
+      future: authService.getItem('username'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LoadingScreen();
+        }
+
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error loading options'));
+        }
+
+        final user = snapshot.data!;
+
+        return _mainCanvas(user);
+      },
+    );
+  }
+
+  Widget _mainCanvas(String? user) {
+    double bubbleSize = 150;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daily Wellness',
-            style: TwTextStyles.heading1(context)
-                .copyWith(color: TwColors.primary(context))),
+        title: Text('Welix - $user',
+            style: TwTextStyles.heading1(context).copyWith(
+              color: TwColors.text(context),
+              fontStyle: FontStyle.italic,
+            )),
         centerTitle: true,
         backgroundColor: TwColors.background(context),
         elevation: 0,
         iconTheme: IconThemeData(color: TwColors.primary(context)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(TwSizes.p4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildWeekCalendar(),
-            const SizedBox(height: TwSizes.p4),
-            _buildDailyChallenge(),
-            const SizedBox(height: TwSizes.p4),
-            _buildEncouragement(),
-          ],
+      body: Stack(children: [
+        BubbleBackground(
+          bubbleCount: 20,
+          maxBubbleSize: bubbleSize,
+          color: Colors.green, // Optional custom color
         ),
-      ),
+        SingleChildScrollView(
+          padding: const EdgeInsets.all(TwSizes.p4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildWeekCalendar(),
+              const SizedBox(height: TwSizes.p4),
+              _buildDailyChallenge(),
+              const SizedBox(height: TwSizes.p4),
+              _buildEncouragement(),
+            ],
+          ),
+        ),
+      ]),
     );
   }
 
