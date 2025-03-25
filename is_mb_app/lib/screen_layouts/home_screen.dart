@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../services/auth_service.dart';
+import '../partical_layouts/loading_screen.dart';
 import 'tailwind.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,12 +10,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  bool _isLoading = true;
+  final bool _isLoading = false;
   late DateTime _selectedDate;
   String _dailyChallenge = "Loading challenge...";
   String _encouragementPhrase = "You're awesome!";
-  int _currentIndex = 0;
-  late AuthService authService;
 
   final List<String> _encouragementPhrases = [
     "You're doing great!",
@@ -30,28 +26,9 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    authService = Provider.of<AuthService>(context, listen: false);
-    _checkAuth();
     _selectedDate = DateTime.now();
     _fetchDailyChallenge();
     _fetchEncouragement();
-  }
-
-  Future<void> _checkAuth() async {
-    // Check if token exists and is not expired
-    final token = await authService.getToken();
-    final isExpired = await authService.isTokenExpired();
-
-    if (token == null || isExpired) {
-      // Redirect to login screen
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/');
-      }
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   // Mock API call for daily challenge
@@ -59,13 +36,17 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       // Replace with actual API call
       await Future.delayed(const Duration(seconds: 1));
-      setState(() {
-        _dailyChallenge = _getRandomChallenge();
-      });
+      if (mounted) {
+        setState(() {
+          _dailyChallenge = _getRandomChallenge();
+        });
+      }
     } catch (e) {
-      setState(() {
-        _dailyChallenge = "Complete a 10-minute meditation session";
-      });
+      if (mounted) {
+        setState(() {
+          _dailyChallenge = "Complete a 10-minute meditation session";
+        });
+      }
     }
   }
 
@@ -74,15 +55,19 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       // Replace with actual API call
       await Future.delayed(const Duration(seconds: 1));
-      setState(() {
-        _encouragementPhrase = _encouragementPhrases[
-            DateTime.now().millisecondsSinceEpoch %
-                _encouragementPhrases.length];
-      });
+      if (mounted) {
+        setState(() {
+          _encouragementPhrase = _encouragementPhrases[
+              DateTime.now().millisecondsSinceEpoch %
+                  _encouragementPhrases.length];
+        });
+      }
     } catch (e) {
-      setState(() {
-        _encouragementPhrase = "Stay positive!";
-      });
+      if (mounted) {
+        setState(() {
+          _encouragementPhrase = "Stay positive!";
+        });
+      }
     }
   }
 
@@ -98,27 +83,19 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _onDaySelected(DateTime date) {
-    setState(() {
-      _selectedDate = date;
-    });
-    // Add API call to fetch date-specific data here
-  }
+    if (mounted) {
+      setState(() {
+        _selectedDate = date;
+      });
+    }
 
-  void _onBottomNavTap(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    // Add navigation logic here
+    // Add API call to fetch date-specific data here
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const LoadingScreen();
     }
 
     return Scaffold(
@@ -144,7 +121,6 @@ class HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -235,40 +211,6 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: _onBottomNavTap,
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: TwColors.primary(context),
-      unselectedItemColor: TwColors.secondary(context),
-      backgroundColor: TwColors.background(context),
-      selectedLabelStyle: TwTextStyles.body(context).copyWith(fontSize: 16),
-      unselectedLabelStyle: TwTextStyles.body(context).copyWith(fontSize: 12),
-      iconSize: TwSizes.p5,
-      items: [
-        _buildNavItem(Icons.home, 'Home'),
-        _buildNavItem(Icons.people, 'Community'),
-        _buildNavItem(Icons.emoji_emotions, 'Check-in'),
-        _buildNavItem(Icons.analytics, 'Stats'),
-        _buildNavItem(Icons.person, 'Profile'),
-      ],
-    );
-  }
-
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label) {
-    return BottomNavigationBarItem(
-      icon: Container(
-        padding: const EdgeInsets.all(TwSizes.p2),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(TwSizes.p2),
-        ),
-        child: Icon(icon),
-      ),
-      label: label,
     );
   }
 }

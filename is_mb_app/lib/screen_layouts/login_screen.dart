@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../api_routes/api_service.dart';
 import '../services/auth_service.dart';
-import 'home_screen.dart';
-import 'register_screen.dart';
+import '../services/navigation_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +18,7 @@ class LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   late ApiService _apiService;
   late AuthService authService;
+  late NavigationService navigationService;
   bool _isLoading = false;
 
   @override
@@ -26,6 +26,7 @@ class LoginScreenState extends State<LoginScreen> {
     super.initState();
     _apiService = Provider.of<ApiService>(context, listen: false);
     authService = Provider.of<AuthService>(context, listen: false);
+    navigationService = Provider.of<NavigationService>(context, listen: false);
   }
 
   @override
@@ -38,7 +39,9 @@ class LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
-    _isLoading = true;
+    setState(() {
+      _isLoading = true; // Start loading
+    });
 
     if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,10 +78,7 @@ class LoginScreenState extends State<LoginScreen> {
           authService.saveTokenUserInfo(token);
 
           // Navigate to the home screen
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
+          navigationService.navigateTo('/', tabIndex: 0);
         } else {
           // Handle other status codes (e.g., 400, 401, 500)
           if (mounted) {
@@ -96,7 +96,9 @@ class LoginScreenState extends State<LoginScreen> {
         );
       }
     } finally {
-      _isLoading = false;
+      setState(() {
+        _isLoading = false; // Start loading
+      });
     }
   }
 
@@ -133,20 +135,14 @@ class LoginScreenState extends State<LoginScreen> {
               textColor: Colors.white, // Custom text color
               borderRadius: 12.0, // Custom border radius
               icon: const Icon(Icons.login), // Add an icon
-              isLoading: false,
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text(
-                      'Login'), // Set to true to show a loading indicator
+              isLoading: _isLoading,
+              child: const Text(
+                  'Login'), // Set to true to show a loading indicator
             ),
             const SizedBox(height: TwSizes.p4),
             TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const RegisterScreen()),
-                );
+                navigationService.navigateTo('/register');
               },
               child: const Text('Don\'t have an account? Register'),
             ),

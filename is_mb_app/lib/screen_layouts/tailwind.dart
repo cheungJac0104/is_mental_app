@@ -157,28 +157,49 @@ class TwButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,
-        foregroundColor: textColor,
-        padding: padding,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-      ),
-      child: isLoading
-          ? CircularProgressIndicator(
-              color: textColor,
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) icon!,
-                if (icon != null) const SizedBox(width: 8.0),
-                child,
-              ],
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Button
+        ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isLoading ? Colors.transparent : backgroundColor,
+            foregroundColor: textColor,
+            padding: padding,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+              side: isLoading
+                  ? BorderSide(
+                      color: backgroundColor,
+                      width: 2.0,
+                    )
+                  : BorderSide.none,
             ),
+          ),
+          child: isLoading
+              ? const SizedBox.shrink() // Hide button content when loading
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) icon!,
+                    if (icon != null) const SizedBox(width: 8.0),
+                    child,
+                  ],
+                ),
+        ),
+
+        // Loading border animation
+        if (isLoading)
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.0,
+              valueColor: AlwaysStoppedAnimation<Color>(textColor),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -50,7 +50,9 @@ class RegisterScreenState extends State<RegisterScreen> {
     final email = _emailController.text;
     final password = _passwordController.text;
 
-    _isLoading = true;
+    setState(() {
+      _isLoading = true;
+    });
 
     if (username.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +96,9 @@ class RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } finally {
-      _isLoading = false;
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -146,9 +150,8 @@ class RegisterScreenState extends State<RegisterScreen> {
                   : () async {
                       await _register();
                     },
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('Register'),
+              isLoading: _isLoading,
+              child: const Text('Register'),
             ),
             const SizedBox(height: TwSizes.p4),
             TextButton(

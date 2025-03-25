@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:is_mb_app/screen_layouts/master_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_routes/api_service.dart';
 import 'screen_layouts/theme_provider.dart';
 
-import 'screen_layouts/home_screen.dart';
 import 'screen_layouts/login_screen.dart';
 import 'screen_layouts/register_screen.dart';
 import 'screen_layouts/tailwind.dart';
 import 'services/auth_service.dart';
+import 'services/navigation_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,7 @@ Future<void> main() async {
   final themeProvider = ThemeProvider();
   final authService = AuthService(prefs);
   final apiService = ApiService();
+  final navigationService = NavigationService();
 
   runApp(
     MultiProvider(
@@ -27,6 +29,7 @@ Future<void> main() async {
         ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
         Provider<AuthService>.value(value: authService),
         Provider<ApiService>.value(value: apiService),
+        Provider<NavigationService>.value(value: navigationService),
       ],
       child: const MyApp(),
     ),
@@ -40,6 +43,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final navigationService = Provider.of<NavigationService>(context);
 
     ThemeData buildLightTheme() {
       return ThemeData(
@@ -60,11 +64,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Daily Wellness',
       theme: themeProvider.isDarkMode ? buildDarkTheme() : buildLightTheme(),
+      navigatorKey: navigationService.navigatorKey,
       initialRoute: '/',
       routes: {
-        '/': (context) => const LoginScreen(),
+        '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/': (context) => const MainWrapper(),
       },
     );
   }
