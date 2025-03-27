@@ -73,6 +73,10 @@ flutter:
     - images/logo.png
     - assets/mood_options.json
   #   - images/a_dot_ham.jpeg
+  fonts:
+    - family: Pacifico
+      fonts:
+        - asset: fonts/Pacifico-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

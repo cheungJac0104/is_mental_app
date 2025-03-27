@@ -127,6 +127,7 @@ class HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('Welix - $user',
             style: TwTextStyles.heading1(context).copyWith(
+              fontFamily: 'Pacifico',
               color: TwColors.text(context),
               fontStyle: FontStyle.italic,
             )),

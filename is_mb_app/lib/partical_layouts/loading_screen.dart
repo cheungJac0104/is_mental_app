@@ -22,7 +22,7 @@ class LoadingScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               padding: const EdgeInsets.all(16),
-              child: const Icon(Icons.access_time),
+              child: const Icon(Icons.catching_pokemon),
             ),
             const SizedBox(height: 32),
 

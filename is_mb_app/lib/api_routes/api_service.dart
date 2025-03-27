@@ -85,6 +85,38 @@ class ApiService {
     return _requestPattern(operation: operation, data: data, path: path);
   }
 
+  Future<Response> _userMoodRequest({
+    required String operation,
+    required Map<String, dynamic> data,
+  }) async {
+    const path = '/userMood'; // Replace with your API endpoint
+    return _requestPattern(operation: operation, data: data, path: path);
+  }
+
+  Future<Response> _userStatsRequest({
+    required String operation,
+    required Map<String, dynamic> data,
+  }) async {
+    const path = '/userStats'; // Replace with your API endpoint
+    return _requestPattern(operation: operation, data: data, path: path);
+  }
+
+  Future<Response> _userCommuRequest({
+    required String operation,
+    required Map<String, dynamic> data,
+  }) async {
+    const path = '/userCommu'; // Replace with your API endpoint
+    return _requestPattern(operation: operation, data: data, path: path);
+  }
+
+  Future<Response> _userProfileRequest({
+    required String operation,
+    required Map<String, dynamic> data,
+  }) async {
+    const path = '/userProfile'; // Replace with your API endpoint
+    return _requestPattern(operation: operation, data: data, path: path);
+  }
+
   // Register API
   Future<Response> register({
     required String username,

@@ -10,6 +10,7 @@ import 'screen_layouts/login_screen.dart';
 import 'screen_layouts/register_screen.dart';
 import 'screen_layouts/tailwind.dart';
 import 'services/auth_service.dart';
+import 'services/mood_service.dart';
 import 'services/navigation_service.dart';
 
 Future<void> main() async {
@@ -22,6 +23,7 @@ Future<void> main() async {
   final authService = AuthService(prefs);
   final apiService = ApiService();
   final navigationService = NavigationService();
+  final moodService = MoodService();
 
   runApp(
     MultiProvider(
@@ -30,6 +32,7 @@ Future<void> main() async {
         Provider<AuthService>.value(value: authService),
         Provider<ApiService>.value(value: apiService),
         Provider<NavigationService>.value(value: navigationService),
+        Provider<MoodService>.value(value: moodService),
       ],
       child: const MyApp(),
     ),

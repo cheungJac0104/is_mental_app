@@ -14,7 +14,7 @@ class GeometricBackground extends StatefulWidget {
     this.secondaryColor = const Color(0xFF00CEFF),
     this.shapeCount = 12,
     this.maxSize = 120,
-    this.animationDuration = const Duration(seconds: 20),
+    this.animationDuration = const Duration(seconds: 6),
   });
 
   @override

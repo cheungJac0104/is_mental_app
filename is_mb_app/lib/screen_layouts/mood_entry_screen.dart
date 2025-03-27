@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:is_mb_app/api_routes/api_service.dart';
 import 'package:is_mb_app/partical_layouts/loading_screen.dart';
+import 'package:provider/provider.dart';
 import '../models/mood_options.dart';
 import '../partical_layouts/bubble_background.dart';
 import '../services/mood_service.dart';
@@ -19,7 +21,8 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
   final Set<String> _selectedKeywords = {};
   final TextEditingController _noteController = TextEditingController();
   late Future<MoodOptions> _moodOptions;
-  final MoodService _moodService = MoodService();
+  late MoodService _moodService;
+  late ApiService apiService;
 
   late PageController _pageController;
   int _currentPage = 0;
@@ -28,6 +31,8 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
   @override
   void initState() {
     super.initState();
+    _moodService = Provider.of<MoodService>(context, listen: false);
+    apiService = Provider.of<ApiService>(context, listen: false);
     _moodOptions = _moodService.loadMoodOptions();
     _pageController = PageController();
   }
@@ -62,7 +67,12 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
   Widget _mainCanvas(MoodOptions? options) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mood Check In'),
+        title: Text('Mood',
+            style: TwTextStyles.heading1(context).copyWith(
+              fontFamily: 'Pacifico',
+              color: TwColors.text(context),
+              fontStyle: FontStyle.italic,
+            )),
         centerTitle: true,
         actions: [
           if (_currentPage == 3) // Only show on last section
@@ -196,14 +206,14 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
               backgroundColor: TwColors.background(context),
               selectedColor: TwColors.primary(context).withOpacity(0.2),
               labelStyle: TextStyle(
-                color: _selectedMood == mood
+                color: _selectedMood == mood.displayText
                     ? TwColors.primary(context)
                     : TwColors.text(context),
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
                 side: BorderSide(
-                  color: _selectedMood == mood
+                  color: _selectedMood == mood.displayText
                       ? TwColors.primary(context)
                       : Colors.grey.shade300,
                 ),
@@ -283,11 +293,11 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
           }),
         ),
         const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text('Mild', style: TextStyle(color: Colors.grey)),
               Text('Intense', style: TextStyle(color: Colors.grey)),
             ],

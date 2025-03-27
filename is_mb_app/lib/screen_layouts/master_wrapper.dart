@@ -24,7 +24,6 @@ class MainWrapperState extends State<MainWrapper> {
   int _currentIndex = 0;
   late AuthService authService;
   late NavigationService navigationService;
-  bool _isLoading = true;
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -86,7 +85,7 @@ class MainWrapperState extends State<MainWrapper> {
       items: [
         _buildNavItem(Icons.home, 'Home'),
         _buildNavItem(Icons.people, 'Community'),
-        _buildNavItem(Icons.emoji_emotions, 'Mood Check-In'),
+        _buildNavItem(Icons.emoji_emotions, 'Check-In'),
         _buildNavItem(Icons.analytics, 'Stats'),
         _buildNavItem(Icons.person, 'Profile'),
       ],

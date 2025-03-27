@@ -12,7 +12,7 @@ class BubbleBackground extends StatefulWidget {
     this.color,
     this.bubbleCount = 15,
     this.maxBubbleSize = 100,
-    this.animationDuration = const Duration(seconds: 15),
+    this.animationDuration = const Duration(seconds: 6),
   });
 
   @override
