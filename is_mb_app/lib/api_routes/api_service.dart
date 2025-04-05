@@ -150,6 +150,10 @@ class ApiService {
     );
   }
 
+  Future<Response> createMoodRecord(Map<String, dynamic> moodEntry) async {
+    return _userMoodRequest(operation: 'createMoodRecord', data: {});
+  }
+
   Map<String, dynamic> responseBodyParse(Response response) {
     final responseBody = jsonEncode(response.data);
     debugPrint('Response Body: $responseBody');

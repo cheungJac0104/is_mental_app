@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:is_mb_app/api_routes/api_service.dart';
 import 'package:is_mb_app/partical_layouts/loading_screen.dart';
 import 'package:provider/provider.dart';
+import '../api_routes/deepseek_api.dart';
 import '../models/mood_options.dart';
 import '../partical_layouts/bubble_background.dart';
 import '../services/mood_service.dart';
+import 'mood_tips_screen.dart';
 import 'tailwind.dart';
 
 class MoodEntryScreen extends StatefulWidget {
@@ -23,6 +25,7 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
   late Future<MoodOptions> _moodOptions;
   late MoodService _moodService;
   late ApiService apiService;
+  bool _isLoading = false;
 
   late PageController _pageController;
   int _currentPage = 0;
@@ -58,6 +61,8 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
         }
 
         final options = snapshot.data!;
+
+        if (_isLoading) return const LoadingScreen();
 
         return _mainCanvas(options);
       },
@@ -417,7 +422,10 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
     }
   }
 
-  void _submitEntry() {
+  void _submitEntry() async {
+    setState(() {
+      _isLoading = true;
+    });
     if (_selectedMood == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select your mood')),
@@ -434,9 +442,38 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
       'timestamp': DateTime.now(),
     };
 
-    // TODO: Save mood entry to database/API
-    debugPrint('Mood Entry: $moodEntry');
+    final api = DeepSeekApi(const String.fromEnvironment('DEEPSEEK_API_KEY'));
 
-    Navigator.pop(context, moodEntry);
+    try {
+      final result = await api.generateMoodTip(
+        mood: _selectedMood ?? '',
+        intensity: _selectedIntensity ?? 1,
+        keywords: _selectedKeywords.toList(),
+        notes: _noteController.text,
+      );
+
+      debugPrint('Generated Tip: ${result['tip']}');
+      debugPrint('Usage: ${result['usage']}');
+      moodEntry['tip'] = result['tip'];
+      moodEntry['usage'] = result['usage'];
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MoodTipScreen(moodEntry: moodEntry),
+          ),
+        ).then((updatedEntry) {
+          debugPrint('Received feedback: $updatedEntry');
+          // Process the feedback data
+        });
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
+    }
   }
 }
