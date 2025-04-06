@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api_routes/api_service.dart';
+import '../partical_layouts/loading_screen.dart';
 
 class MoodTipScreen extends StatefulWidget {
   final Map<String, dynamic> moodEntry;
@@ -21,10 +22,20 @@ class MoodTipScreenState extends State<MoodTipScreen>
   int _userRating = 0;
   late ApiService apiService;
 
+  // State management variables
+  bool _isLoading = true;
+  dynamic _moodRecordResponse;
+  dynamic _error;
+
   @override
   void initState() {
     super.initState();
     apiService = Provider.of<ApiService>(context, listen: false);
+    _setupAnimation();
+    _loadData();
+  }
+
+  void _setupAnimation() {
     _controller = AnimationController(
       duration: Duration(milliseconds: widget.moodEntry['tip'].length * 100),
       vsync: this,
@@ -44,6 +55,31 @@ class MoodTipScreenState extends State<MoodTipScreen>
     _controller.forward();
   }
 
+  Future<void> _loadData() async {
+    try {
+      final response = await apiService.createMoodRecord(widget.moodEntry);
+      apiService.responseBodyParse(response);
+      setState(() {
+        _moodRecordResponse = response;
+        _isLoading = false;
+        _error = null;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _handleRefresh() {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    _loadData();
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -53,160 +89,184 @@ class MoodTipScreenState extends State<MoodTipScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text("Your Mood Tip"),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.indigo[800],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+    if (_isLoading) {
+      return const LoadingScreen();
+    }
+
+    if (_error != null) {
+      return Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Mood Card
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: _getMoodColor(widget.moodEntry['mood'])
-                              .withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _getMoodIcon(widget.moodEntry['mood']),
-                          color: _getMoodColor(widget.moodEntry['mood']),
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        widget.moodEntry['mood'],
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Animated Tip Text
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.indigo[50],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _displayText,
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 1.5,
-                        color: Colors.indigo[900],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            // Feedback Section
-            Text(
-              "How helpful was this tip?",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Star Rating
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                return IconButton(
-                  icon: Icon(
-                    index < _userRating ? Icons.star : Icons.star_border,
-                    color: Colors.amber[600],
-                    size: 32,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _userRating = index + 1;
-                    });
-                  },
-                );
-              }),
-            ),
-            const SizedBox(height: 24),
-            // Feedback Text Field
-            TextField(
-              controller: _feedbackController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: "Optional feedback...",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.indigo),
-                ),
-                contentPadding: const EdgeInsets.all(16),
-              ),
-            ),
-            const Spacer(),
-            // Submit Button
+            Text('Error: $_error'),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, {
-                  ...widget.moodEntry,
-                  'user_feedback': _userRating,
-                  'feedback_text': _feedbackController.text,
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo[600],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text(
-                "Submit Feedback",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
+              onPressed: _handleRefresh,
+              child: const Text('Retry'),
             ),
           ],
         ),
-      ),
-    );
+      );
+    }
+
+    return _mainCanvas(context);
+  }
+
+  Widget _mainCanvas(BuildContext context) {
+    return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text("Your Mood Tip"),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.indigo[800],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Mood Card
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _getMoodColor(widget.moodEntry['mood'])
+                                .withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _getMoodIcon(widget.moodEntry['mood']),
+                            color: _getMoodColor(widget.moodEntry['mood']),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          widget.moodEntry['mood'],
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    // Animated Tip Text
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _displayText,
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 1.5,
+                          color: Colors.indigo[900],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // ... Rest of the UI remains the same
+              const SizedBox(height: 32),
+              Text(
+                "How helpful was this tip?",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < _userRating ? Icons.star : Icons.star_border,
+                      color: Colors.amber[600],
+                      size: 32,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _userRating = index + 1;
+                      });
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: _feedbackController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Optional feedback...",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.indigo),
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+              ),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context, {
+                    ...widget.moodEntry,
+                    'user_feedback': _userRating,
+                    'feedback_text': _feedbackController.text,
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo[600],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                  "Submit Feedback",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Color _getMoodColor(String mood) {

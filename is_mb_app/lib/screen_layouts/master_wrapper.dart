@@ -43,6 +43,7 @@ class MainWrapperState extends State<MainWrapper> {
 
   Future<void> _checkAuth() async {
     // Check if token exists and is not expired
+    //await authService.clearToken();
     final token = await authService.getToken();
     final isExpired = await authService.isTokenExpired();
 

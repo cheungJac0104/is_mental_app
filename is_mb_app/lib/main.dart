@@ -15,13 +15,13 @@ import 'services/navigation_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load();
+  await dotenv.load(fileName: '.env');
   final prefs = await SharedPreferences.getInstance();
 
   // Create instances of providers
   final themeProvider = ThemeProvider();
   final authService = AuthService(prefs);
-  final apiService = ApiService();
+  final apiService = ApiService(authService);
   final navigationService = NavigationService();
   final moodService = MoodService();
 

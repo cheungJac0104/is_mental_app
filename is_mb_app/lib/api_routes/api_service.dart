@@ -4,12 +4,16 @@ import 'package:aws_common/aws_common.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 import 'aws_sig_v4_client.dart'; // Import the AwsSigV4Client
 import 'package:bcrypt/bcrypt.dart';
 import 'dart:io';
 
 class ApiService {
   final AwsSigV4Client _awsSigV4Client = AwsSigV4Client();
+  final AuthService authService;
+
+  ApiService(this.authService);
 
   // Base URL of your API
   static const String _baseUrl =
@@ -151,7 +155,16 @@ class ApiService {
   }
 
   Future<Response> createMoodRecord(Map<String, dynamic> moodEntry) async {
-    return _userMoodRequest(operation: 'createMoodRecord', data: {});
+    String userId = await authService.getItem("user_id") ?? "";
+    return _userMoodRequest(operation: 'createMoodRecord', data: {
+      'mood': moodEntry['mood'],
+      'intensity': moodEntry['intensity'],
+      'keywords': moodEntry['keywords'],
+      'notes': moodEntry['notes'],
+      'timestamp': moodEntry['timestamp'].toIso8601String(),
+      'userId': userId,
+      'tip': moodEntry['tip']
+    });
   }
 
   Map<String, dynamic> responseBodyParse(Response response) {

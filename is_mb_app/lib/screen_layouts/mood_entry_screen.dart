@@ -6,7 +6,7 @@ import '../api_routes/deepseek_api.dart';
 import '../models/mood_options.dart';
 import '../partical_layouts/bubble_background.dart';
 import '../services/mood_service.dart';
-import 'mood_tips_screen.dart';
+import '../services/navigation_service.dart';
 import 'tailwind.dart';
 
 class MoodEntryScreen extends StatefulWidget {
@@ -24,6 +24,7 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
   final TextEditingController _noteController = TextEditingController();
   late Future<MoodOptions> _moodOptions;
   late MoodService _moodService;
+  late NavigationService _navService;
   late ApiService apiService;
   bool _isLoading = false;
 
@@ -36,6 +37,7 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
     super.initState();
     _moodService = Provider.of<MoodService>(context, listen: false);
     apiService = Provider.of<ApiService>(context, listen: false);
+    _navService = Provider.of<NavigationService>(context, listen: false);
     _moodOptions = _moodService.loadMoodOptions();
     _pageController = PageController();
   }
@@ -138,6 +140,7 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
               left: 20,
               bottom: 20,
               child: FloatingActionButton(
+                heroTag: 'fab-back',
                 mini: true,
                 child: const Icon(Icons.arrow_back),
                 onPressed: () => _pageController.previousPage(
@@ -151,6 +154,7 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
             right: 20,
             bottom: 20,
             child: FloatingActionButton(
+              heroTag: 'fab-forward',
               mini: true,
               child:
                   Icon(_currentPage == 3 ? Icons.check : Icons.arrow_forward),
@@ -442,7 +446,7 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
       'timestamp': DateTime.now(),
     };
 
-    final api = DeepSeekApi(const String.fromEnvironment('DEEPSEEK_API_KEY'));
+    final api = DeepSeekApi();
 
     try {
       final result = await api.generateMoodTip(
@@ -462,15 +466,7 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
       });
 
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MoodTipScreen(moodEntry: moodEntry),
-          ),
-        ).then((updatedEntry) {
-          debugPrint('Received feedback: $updatedEntry');
-          // Process the feedback data
-        });
+        _navService.navigateTo('', moodEntry: moodEntry);
       }
     } catch (e) {
       debugPrint('Error: $e');

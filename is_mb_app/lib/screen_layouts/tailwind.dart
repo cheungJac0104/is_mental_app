@@ -18,6 +18,8 @@ extension ThemeExtension on BuildContext {
   TwTextStyles get twTextStyles => Theme.of(this).extension<TwTextStyles>()!;
 }
 
+enum TwButtonVariant { primary, secondary, outline, text }
+
 class TwColors {
   static MaterialColor primary(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
@@ -142,6 +144,7 @@ class TwButton extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final bool isLoading;
   final Widget? icon;
+  final TwButtonVariant? variant;
 
   const TwButton({
     required this.onPressed,
@@ -152,11 +155,21 @@ class TwButton extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
     this.isLoading = false,
     this.icon,
+    this.variant,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Determine colors based on variant if provided
+    final Color bgColor = variant != null
+        ? _getBackgroundColor(variant!, theme)
+        : (backgroundColor);
+
+    final Color fgColor =
+        variant != null ? _getForegroundColor(variant!, theme) : (textColor);
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -164,8 +177,8 @@ class TwButton extends StatelessWidget {
         ElevatedButton(
           onPressed: isLoading ? null : onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: isLoading ? Colors.transparent : backgroundColor,
-            foregroundColor: textColor,
+            backgroundColor: isLoading ? Colors.transparent : bgColor,
+            foregroundColor: fgColor,
             padding: padding,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius),
@@ -174,7 +187,9 @@ class TwButton extends StatelessWidget {
                       color: backgroundColor,
                       width: 2.0,
                     )
-                  : BorderSide.none,
+                  : variant == TwButtonVariant.outline
+                      ? BorderSide(color: theme.primaryColor)
+                      : BorderSide.none,
             ),
           ),
           child: isLoading
@@ -201,6 +216,30 @@ class TwButton extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  Color _getBackgroundColor(TwButtonVariant variant, ThemeData theme) {
+    switch (variant) {
+      case TwButtonVariant.primary:
+        return theme.primaryColor;
+      case TwButtonVariant.secondary:
+        return theme.colorScheme.secondary;
+      case TwButtonVariant.outline:
+        return Colors.transparent;
+      case TwButtonVariant.text:
+        return Colors.transparent;
+    }
+  }
+
+  Color _getForegroundColor(TwButtonVariant variant, ThemeData theme) {
+    switch (variant) {
+      case TwButtonVariant.primary:
+      case TwButtonVariant.secondary:
+        return Colors.white;
+      case TwButtonVariant.outline:
+      case TwButtonVariant.text:
+        return theme.primaryColor;
+    }
   }
 }
 
