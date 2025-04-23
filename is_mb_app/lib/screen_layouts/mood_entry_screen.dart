@@ -7,6 +7,7 @@ import '../models/mood_options.dart';
 import '../partical_layouts/bubble_background.dart';
 import '../services/mood_service.dart';
 import '../services/navigation_service.dart';
+import 'mood_tips_screen.dart';
 import 'tailwind.dart';
 
 class MoodEntryScreen extends StatefulWidget {
@@ -466,7 +467,7 @@ class MoodEntryScreenState extends State<MoodEntryScreen>
       });
 
       if (mounted) {
-        _navService.navigateTo('', moodEntry: moodEntry);
+        _navService.toScreen(screen: MoodTipScreen(moodEntry: moodEntry));
       }
     } catch (e) {
       debugPrint('Error: $e');

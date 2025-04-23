@@ -103,22 +103,9 @@ class HomeScreenState extends State<HomeScreen> {
       return const LoadingScreen();
     }
 
-    return FutureBuilder<String?>(
-      future: authService.getItem('username'),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const LoadingScreen();
-        }
+    final user = authService.getItem('username');
 
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error loading options'));
-        }
-
-        final user = snapshot.data!;
-
-        return _mainCanvas(user);
-      },
-    );
+    return _mainCanvas(user);
   }
 
   Widget _mainCanvas(String? user) {

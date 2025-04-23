@@ -45,17 +45,34 @@ class DeepSeekApi {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        // Decode bytes explicitly as UTF-8 to avoid mojibake (e.g., â)
+        final utf8Decoded = utf8.decode(response.bodyBytes); // Critical fix
+        final data = jsonDecode(utf8Decoded);
+
+        String tip = data['choices'][0]['message']['content'].trim();
+
+        // Fix common mojibake characters (e.g., â€™ → ’)
+        tip = tip
+            .replaceAll('â€™', '’') // Fix curly apostrophe
+            .replaceAll('â€”', '—') // Fix em-dash
+            .replaceAll('â€“', '–'); // Fix en-dash
+
         return {
-          'tip': data['choices'][0]['message']['content'].trim(),
+          'tip': tip,
           'usage': data['usage'],
+          'status': 'success',
         };
       } else {
         throw Exception(
             'API Error: ${response.statusCode} - ${response.reasonPhrase}');
       }
     } catch (e) {
-      throw Exception('Tip generation failed: ${e.toString()}');
+      return {
+        'tip': 'Failed to generate tip. Please try again.',
+        'usage': null,
+        'status': 'error',
+        'error': e.toString(),
+      };
     }
   }
 }

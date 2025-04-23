@@ -143,8 +143,15 @@ class RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _registerScreen() {
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
     return Padding(
-      padding: const EdgeInsets.all(TwSizes.p4),
+      padding: EdgeInsets.only(
+        bottom: bottomPadding > 0 ? 0 : TwSizes.p4,
+        left: TwSizes.p4,
+        right: TwSizes.p4,
+        top: TwSizes.p4,
+      ),
       child: Column(
         children: [
           Expanded(

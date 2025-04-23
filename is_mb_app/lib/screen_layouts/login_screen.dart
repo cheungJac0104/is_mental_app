@@ -56,48 +56,75 @@ class LoginScreenState extends State<LoginScreen> {
     }
 
     try {
+      // 1. Make login request
+      final stopwatch = Stopwatch()..start();
       final response = await _apiService.login(username, password);
+
       if (response.statusCode == 200) {
-        // Handle successful login
-        var body = _apiService.responseBodyParse(response);
-        final int statusCode = body['statusCode'] as int;
-        final String bodyString = body['body'].toString();
+        // 2. Parallel processing of response parsing
+        final parsedBody = [
+          _apiService.responseBodyParse(response),
+          _apiService.getResBodyJson(response),
+        ];
 
-        var bodyJson = _apiService.jsonBodyParse(bodyString);
-        // Extract the message and token
-        final String message = bodyJson['message'].toString();
-        final String token = bodyJson['token'].toString();
+        final body = parsedBody[0];
+        final bodyJson = parsedBody[1];
 
-        if (statusCode == 200 && mounted) {
-          // Handle successful login
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message),
-              backgroundColor: Colors.green,
-            ),
-          );
+        final statusCode = body['statusCode'] as int;
+        final message = bodyJson['message'].toString();
+        final token = bodyJson['token'].toString();
 
-          // Save the token and user information
+        if (statusCode == 200) {
+          // 3. Parallel save operations
+          await Future.wait([
+            authService.saveToken(token, 3600),
+            authService.saveTokenUserInfo(token),
+          ]);
 
-          authService.saveToken(token, 3600);
-          authService.saveTokenUserInfo(token);
+          final userId = authService.userIdGetter();
 
-          // Navigate to the home screen
-          navigationService.navigateTo('/', tabIndex: 0);
+          // 4. Parallel initialization of analytics and privacy settings
+          final [aly, ps] = await Future.wait([
+            _apiService.initAnalytics(userId),
+            _apiService.getOrCreatePrivacySetting(userId),
+          ]);
+
+          final psJson = _apiService.getResBodyJson(ps);
+          final privacy = psJson['data']['dataSharingLevel'].toString();
+          await authService.privacySetter(privacy);
+
+          // 5. UI updates with mounted checks
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: Colors.green,
+              ),
+            );
+            navigationService.navigateTo('/', tabIndex: 0);
+          }
         } else {
-          // Handle other status codes (e.g., 400, 401, 500)
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(message)),
             );
           }
         }
-        // Navigate to the home screen or perform other actions
+      } else {
+        // Handle non-200 status codes
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed: ${response.statusCode}')),
+          );
+        }
       }
-    } catch (e) {
+
+      debugPrint('Login process took ${stopwatch.elapsedMilliseconds}ms');
+    } catch (e, stackTrace) {
+      debugPrint('Login error: $e\n$stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text('An error occurred during login')),
         );
       }
     } finally {
@@ -134,8 +161,15 @@ class LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _loginScreen() {
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
     return Padding(
-      padding: const EdgeInsets.all(TwSizes.p4),
+      padding: EdgeInsets.only(
+        bottom: bottomPadding > 0 ? 0 : TwSizes.p4,
+        left: TwSizes.p4,
+        right: TwSizes.p4,
+        top: TwSizes.p4,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

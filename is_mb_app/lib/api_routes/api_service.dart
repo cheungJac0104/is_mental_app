@@ -1,13 +1,20 @@
 import 'dart:convert';
-
 import 'package:aws_common/aws_common.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'aws_sig_v4_client.dart'; // Import the AwsSigV4Client
+import 'aws_sig_v4_client.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'dart:io';
+
+part 'api_service.part.auth.dart';
+part 'api_service.part.mood.dart';
+part 'api_service.part.stats.dart';
+part 'api_service.part.community.dart';
+part 'api_service.part.friend_list.dart';
+part 'api_service.part.pub_challenge.dart';
+part 'api_service.part.user_event.dart';
 
 class ApiService {
   final AwsSigV4Client _awsSigV4Client = AwsSigV4Client();
@@ -19,10 +26,11 @@ class ApiService {
   static const String _baseUrl =
       'https://du4cwpwkyi.execute-api.us-east-1.amazonaws.com/dev';
 
-  Future<Response> _requestPattern(
-      {required String operation,
-      required Map<String, dynamic> data,
-      required String path}) async {
+  Future<Response> _requestPattern({
+    required String operation,
+    required Map<String, dynamic> data,
+    required String path,
+  }) async {
     final body = {
       'operation': operation,
       'data': data,
@@ -45,17 +53,14 @@ class ApiService {
       // Add a custom HttpClient with SSL verification disabled
       dio.httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
-          // Don't trust any certificate just because their root cert is trusted.
           final HttpClient client =
               HttpClient(context: SecurityContext(withTrustedRoots: false));
-          // You can test the intermediate / root cert here. We just ignore it.
           client.badCertificateCallback = ((_, String host, int port) => true);
           return client;
         },
       );
 
       final response = await dio.post(path, data: body);
-
       return response;
     } on DioException catch (e) {
       debugPrint('''
@@ -80,99 +85,17 @@ class ApiService {
     }
   }
 
-  // Helper method to make a userAuth request
-  Future<Response> _userAuthRequest({
-    required String operation,
-    required Map<String, dynamic> data,
-  }) async {
-    const path = '/userAuth'; // Replace with your API endpoint
-    return _requestPattern(operation: operation, data: data, path: path);
-  }
-
-  Future<Response> _userMoodRequest({
-    required String operation,
-    required Map<String, dynamic> data,
-  }) async {
-    const path = '/userMood'; // Replace with your API endpoint
-    return _requestPattern(operation: operation, data: data, path: path);
-  }
-
-  Future<Response> _userStatsRequest({
-    required String operation,
-    required Map<String, dynamic> data,
-  }) async {
-    const path = '/userStats'; // Replace with your API endpoint
-    return _requestPattern(operation: operation, data: data, path: path);
-  }
-
-  Future<Response> _userCommuRequest({
-    required String operation,
-    required Map<String, dynamic> data,
-  }) async {
-    const path = '/userCommu'; // Replace with your API endpoint
-    return _requestPattern(operation: operation, data: data, path: path);
-  }
-
-  Future<Response> _userProfileRequest({
-    required String operation,
-    required Map<String, dynamic> data,
-  }) async {
-    const path = '/userProfile'; // Replace with your API endpoint
-    return _requestPattern(operation: operation, data: data, path: path);
-  }
-
-  // Register API
-  Future<Response> register({
-    required String username,
-    required String email,
-    required String password,
-  }) async {
-    final salt = BCrypt.gensalt();
-    final encryptedPassword = BCrypt.hashpw(password, salt);
-    return _userAuthRequest(
-      operation: 'regis',
-      data: {
-        'username': username,
-        'email': email,
-        'salt': salt,
-        'encrypted_password': encryptedPassword,
-      },
-    );
-  }
-
-  // Login API
-  Future<Response> login(
-    String username,
-    String password,
-  ) async {
-    return _userAuthRequest(
-      operation: 'login',
-      data: {
-        'username': username,
-        'password': password,
-      },
-    );
-  }
-
-  Future<Response> createMoodRecord(Map<String, dynamic> moodEntry) async {
-    String userId = await authService.getItem("user_id") ?? "";
-    return _userMoodRequest(operation: 'createMoodRecord', data: {
-      'mood': moodEntry['mood'],
-      'intensity': moodEntry['intensity'],
-      'keywords': moodEntry['keywords'],
-      'notes': moodEntry['notes'],
-      'timestamp': moodEntry['timestamp'].toIso8601String(),
-      'userId': userId,
-      'tip': moodEntry['tip']
-    });
-  }
-
   Map<String, dynamic> responseBodyParse(Response response) {
     final responseBody = jsonEncode(response.data);
     debugPrint('Response Body: $responseBody');
     return jsonDecode(responseBody);
-  } // Add this line to get the response body
+  }
 
   Map<String, dynamic> jsonBodyParse(String jsonString) =>
       jsonDecode(jsonString);
+
+  Map<String, dynamic> getResBodyJson(Response response) {
+    final x = responseBodyParse(response)['body'].toString();
+    return jsonBodyParse(x);
+  }
 }

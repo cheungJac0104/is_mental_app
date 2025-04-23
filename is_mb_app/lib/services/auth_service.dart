@@ -1,6 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
+import '../models/user.dart';
+
 class AuthService {
   final SharedPreferences _prefs;
 
@@ -32,9 +34,20 @@ class AuthService {
     return _prefs.getString('auth_token');
   }
 
-  Future<String?> getItem(String key) async {
+  String? getItem(String key) {
     return _prefs.getString(key);
   }
+
+  Future<void> setItem(String key, dynamic item) async {
+    await _prefs.setString(key, item);
+  }
+
+  Future<void> privacySetter(String level) async =>
+      await setItem('privacy', level);
+
+  String privacyGetter() => getItem('privacy') ?? "public";
+
+  String userIdGetter() => getItem('user_id') ?? "";
 
   // Check if token is expired
   Future<bool> isTokenExpired() async {
@@ -49,5 +62,15 @@ class AuthService {
   Future<void> clearToken() async {
     await _prefs.remove('auth_token');
     await _prefs.remove('token_expiration');
+    await _prefs.remove('privacyLv');
+  }
+
+  Future<User> getUser() async {
+    final userId = userIdGetter();
+    final username = _prefs.getString('username') ?? "";
+    final email = _prefs.getString('email') ?? "";
+
+    return User(
+        email: email, username: username, id: userId, fullName: username);
   }
 }

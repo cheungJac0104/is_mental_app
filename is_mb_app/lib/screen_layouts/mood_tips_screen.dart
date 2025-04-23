@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:is_mb_app/screen_layouts/mood_share_screen.dart';
+import 'package:is_mb_app/services/navigation_service.dart';
 import 'package:provider/provider.dart';
 
 import '../api_routes/api_service.dart';
@@ -21,6 +23,7 @@ class MoodTipScreenState extends State<MoodTipScreen>
   final TextEditingController _feedbackController = TextEditingController();
   int _userRating = 0;
   late ApiService apiService;
+  late NavigationService navService;
 
   // State management variables
   bool _isLoading = true;
@@ -31,6 +34,7 @@ class MoodTipScreenState extends State<MoodTipScreen>
   void initState() {
     super.initState();
     apiService = Provider.of<ApiService>(context, listen: false);
+    navService = Provider.of<NavigationService>(context, listen: false);
     _setupAnimation();
     _loadData();
   }
@@ -55,12 +59,36 @@ class MoodTipScreenState extends State<MoodTipScreen>
     _controller.forward();
   }
 
+  Future<void> _sendFeedback(Map<String, dynamic> feedbackData) async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final rtn = await apiService.updateFeedback(feedbackData);
+
+      apiService.responseBodyParse(rtn);
+
+      if (mounted) {
+        navService.toScreen(screen: MoodShareScreen(moodEntry: feedbackData));
+      }
+    } catch (e) {
+      debugPrint("");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<void> _loadData() async {
     try {
       final response = await apiService.createMoodRecord(widget.moodEntry);
-      apiService.responseBodyParse(response);
+
       setState(() {
-        _moodRecordResponse = response;
+        _moodRecordResponse = apiService.getResBodyJson(response);
+        _moodRecordResponse['mood'] = widget.moodEntry['mood'];
+        _moodRecordResponse['intensity'] = widget.moodEntry['intensity'];
+        _moodRecordResponse['tip'] = widget.moodEntry['tip'];
         _isLoading = false;
         _error = null;
       });
@@ -239,12 +267,13 @@ class MoodTipScreenState extends State<MoodTipScreen>
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context, {
-                    ...widget.moodEntry,
-                    'user_feedback': _userRating,
-                    'feedback_text': _feedbackController.text,
-                  });
+                onPressed: () async {
+                  _moodRecordResponse['feedback'] = _userRating;
+                  _moodRecordResponse['feedbackText'] =
+                      _feedbackController.text;
+
+                  //debugPrint(_moodRecordResponse.toString());
+                  await _sendFeedback(_moodRecordResponse);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.indigo[600],
