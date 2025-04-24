@@ -2,9 +2,11 @@ import 'package:json_annotation/json_annotation.dart';
 
 import 'blocked_user.dart';
 import 'challenge.dart';
+import 'journal.dart';
 import 'pending_friend.dart';
 import 'post.dart';
 import 'friendship.dart';
+import 'user_search_result.dart';
 
 part 'api_response.g.dart';
 
@@ -97,6 +99,45 @@ class BlockedListResponse {
       _$BlockedListResponseFromJson(json);
 
   Map<String, dynamic> toJson() => _$BlockedListResponseToJson(this);
+}
+
+@JsonSerializable(explicitToJson: true)
+class SearchListResponse {
+  final bool success;
+  final int count;
+  final List<UserSearchResult> data;
+  final Pagination pagination;
+
+  SearchListResponse(
+      {required this.success,
+      required this.count,
+      required this.data,
+      required this.pagination});
+
+  factory SearchListResponse.fromJson(Map<String, dynamic> json) =>
+      _$SearchListResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SearchListResponseToJson(this);
+}
+
+@JsonSerializable(explicitToJson: true)
+class JournalResponse {
+  final bool success;
+  final Journal data;
+
+  JournalResponse({
+    required this.success,
+    required this.data,
+  });
+
+  factory JournalResponse.fromJson(Map<String, dynamic> json) {
+    return JournalResponse(
+      success: json['success'] as bool,
+      data: Journal.fromJson(json['data'] as Map<String, dynamic>),
+    );
+  }
+
+  Map<String, dynamic> toJson() => _$JournalResponseToJson(this);
 }
 
 @JsonSerializable()

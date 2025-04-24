@@ -95,6 +95,8 @@ class ApiService {
       jsonDecode(jsonString);
 
   Map<String, dynamic> getResBodyJson(Response response) {
+    final res = responseBodyParse(response);
+    if (res['statusCode'] != 200) return {'success': false};
     final x = responseBodyParse(response)['body'].toString();
     return jsonBodyParse(x);
   }

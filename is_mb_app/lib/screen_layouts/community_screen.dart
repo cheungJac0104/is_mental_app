@@ -1,19 +1,21 @@
 import 'dart:core';
 
 import 'package:flutter/material.dart';
+import 'package:is_mb_app/models/friend_extension.dart';
 import 'package:is_mb_app/partical_layouts/loading_screen.dart';
 import 'package:is_mb_app/partical_layouts/wave_background.dart';
 import 'package:provider/provider.dart';
 
 import '../api_routes/api_service.dart';
 import '../models/api_response.dart';
-import '../models/challenge.dart';
-import '../models/friendship.dart';
+import '../models/pending_friend.dart';
 import '../models/post.dart';
-import '../models/string_extensions.dart';
 import '../partical_layouts/bottom_loading_bar.dart';
+import '../partical_layouts/pending_notifications.dart';
 import '../services/auth_service.dart';
 import '../services/navigation_service.dart';
+import 'community_challenge.dart';
+import 'community_friends.dart';
 import 'community_privacy.dart';
 import 'tailwind.dart';
 
@@ -40,6 +42,7 @@ class CommunityScreenState extends State<CommunityScreen> {
   Map<String, int> _participates = {};
   Map<String, bool> _postLikes = {};
   Map<String, int> _postCounts = {};
+  late String privacy;
 
   @override
   void initState() {
@@ -48,6 +51,7 @@ class CommunityScreenState extends State<CommunityScreen> {
     authService = Provider.of<AuthService>(context, listen: false);
     navService = Provider.of<NavigationService>(context, listen: false);
     userId = authService.userIdGetter();
+    privacy = authService.privacyGetter();
     fetchData();
   }
 
@@ -164,11 +168,19 @@ class CommunityScreenState extends State<CommunityScreen> {
               )),
           centerTitle: true,
           actions: [
-            IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
+            PendingNotifications(
+              pendingFriends: _pendingFriendResponse?.data ?? [],
+              onRespondToRequest: _respondToRequest,
+            ),
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () => navService.toScreen(
-                  screen: const PrivacySettingsPage(), clearStack: false),
+                  screen: PrivacySettingPage(
+                      userId: userId,
+                      apiService: apiService,
+                      blockedFriends: _blockedListResponse?.data ?? [],
+                      privacy: privacy),
+                  clearStack: false),
             ),
           ],
         ),
@@ -190,8 +202,8 @@ class CommunityScreenState extends State<CommunityScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildPublicChallenges(_challengeResponse!.data),
-              _buildFriendsList(_friendResponse!.data),
+              _buildPublicChallenges(),
+              _buildFriendsList(),
               _buildCommunityPosts(_postResponse!.data),
             ],
           ),
@@ -210,147 +222,52 @@ class CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  Widget _buildPublicChallenges(List<Challenge> challenges) {
-    // Filter or sort challenges if needed
-    final publicChallenges = challenges.where((c) => c.title != null).toList();
+  Future<void> _respondToRequest(PendingFriendship friend, bool accept) async {
+    try {
+      // TODO: Implement API call to respond to request
+      // await apiService.respondToFriendRequest(friend.id, accept);
 
-    return Padding(
-      padding: const EdgeInsets.all(4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Challenges',
-                  style: TwTextStyles.body(context).copyWith(
-                    fontFamily: 'Pacifico',
-                    color: TwColors.text(context),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('See All'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          SizedBox(
-            height: 210,
-            child: publicChallenges.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: publicChallenges.length,
-                    itemBuilder: (context, index) {
-                      final challenge = publicChallenges[index];
-                      final participantCount = _participates.entries
-                          .singleWhere(
-                              (element) => element.key == challenge.challengeId)
-                          .value;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _buildChallengeCard(
-                            challenge.title ?? 'Untitled Challenge',
-                            _getRemainingTime(challenge.completionDate),
-                            '$participantCount participants',
-                            challenge.challengeId ?? ""),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Text(
-        'No challenges available',
-        style: TextStyle(color: TwColors.text(context)),
-      ),
-    );
-  }
-
-  String _getRemainingTime(DateTime? endDate) {
-    if (endDate == null) return 'No deadline';
-    final now = DateTime.now();
-    final difference = endDate.difference(now);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} days left';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hours left';
-    } else {
-      return 'Ending soon';
-    }
-  }
-
-  Widget _buildChallengeCard(
-      String title, String duration, String participants, String challengeId) {
-    bool isChallengeJoined = _joinedChallenges.any((j) => j == challengeId);
-
-    void toggleChallenge() async {
-      final result = await challengeJoin(challengeId, isChallengeJoined);
-      if (!mounted) return;
+      // Update local state
       setState(() {
-        // Update participant count
-        if (_participates.containsKey(challengeId)) {
-          _participates[challengeId] = result
-              ? _participates[challengeId]! + 1 // User joined (increment)
-              : _participates[challengeId]! - 1; // User left (decrement)
+        _pendingFriendResponse?.data.remove(friend);
+        if (accept) {
+          final newFriend = friend.beFriend();
+          _friendResponse?.data.add(newFriend);
         }
       });
-    }
 
-    return Container(
-      width: 300,
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 8, spreadRadius: 2),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.emoji_events, size: 40, color: Colors.amber),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            maxLines: 2, // Allow maximum 2 lines
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          Text("$duration | $participants",
-              style: const TextStyle(color: Colors.grey)),
-          const Spacer(),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-            ),
-            onPressed: toggleChallenge,
-            child: Text(isChallengeJoined ? 'Joined' : 'Join Challenge'),
-          ),
-        ],
-      ),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(accept ? 'Request accepted' : 'Request declined')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  Widget _buildPublicChallenges() {
+    return CommunityChallenges(
+      challenges: _challengeResponse?.data ?? [],
+      joinedChallenges: _joinedChallenges,
+      participates: _participates,
+      onChallengeToggle: (challengeId, isJoined) async {
+        final result = await challengeJoin(challengeId, isJoined);
+        if (!mounted) return;
+        setState(() {
+          if (_participates.containsKey(challengeId)) {
+            _participates[challengeId] = result
+                ? _participates[challengeId]! + 1
+                : _participates[challengeId]! - 1;
+          }
+        });
+      },
+      userId: userId,
+      apiService: apiService,
+      friends: _friendResponse!.data,
     );
   }
 
@@ -371,101 +288,12 @@ class CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
-  Widget _buildFriendsList(List<Friendship> friends) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Friends',
-                  style: TwTextStyles.body(context).copyWith(
-                    fontFamily: 'Pacifico',
-                    color: TwColors.text(context),
-                  )),
-              TextButton(onPressed: () {}, child: const Text('See All')),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 120, // Increased height to accommodate mood
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: friends.length,
-              itemBuilder: (context, index) {
-                final friend = friends[index];
-                return _buildFriendItem(friend);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFriendItem(Friendship friend) {
-    return Container(
-      width: 80,
-      margin: const EdgeInsets.only(right: 16),
-      child: Column(
-        children: [
-          // Profile avatar with online indicator
-          Stack(
-            children: [
-              const CircleAvatar(
-                radius: 30,
-                backgroundColor: Color.fromARGB(255, 251, 207, 187),
-                child: Icon(Icons.face, size: 45),
-              ),
-              if (friend.mood != null && friend.mood!.isNotEmpty)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          // Username
-          Text(
-            friend.friend.username,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          // Mood display
-          if (friend.mood != null && friend.mood!.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                friend.mood!,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontSize: 10,
-                      color: Colors.grey[800],
-                    ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-        ],
-      ),
+  Widget _buildFriendsList() {
+    return CommunityFriends(
+      friends: _friendResponse?.data ?? [],
+      pendingFriends: _pendingFriendResponse?.data ?? [],
+      userId: userId,
+      apiService: apiService,
     );
   }
 
@@ -716,7 +544,7 @@ class CommunityScreenState extends State<CommunityScreen> {
                     style: TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(context);
-                  // Delete post
+                  _showDeleteDialog(post.postId ?? '');
                 },
               ),
             ],
@@ -724,5 +552,60 @@ class CommunityScreenState extends State<CommunityScreen> {
         );
       },
     );
+  }
+
+  void _showDeleteDialog(String postId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Post'),
+        content: const Text('Are you sure you want to delete this post?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deletePost(postId);
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePost(String postId) async {
+    try {
+      setState(() => _isLoading = true);
+
+      final success = apiService
+          .getResBodyJson(await apiService.deleteCommunityPost(userId, postId));
+
+      if (_isResponseValid(success) && mounted) {
+        // Remove from local list
+        setState(() {
+          _postResponse!.data.removeWhere((post) => post.postId == postId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post deleted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete post: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }

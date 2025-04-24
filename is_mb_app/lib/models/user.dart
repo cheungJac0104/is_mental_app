@@ -13,8 +13,8 @@ class User {
   const User({
     required this.id,
     required this.username,
-    required this.fullName,
-    required this.email,
+    this.fullName = '',
+    this.email = '',
     this.bio = '',
     this.profilePhotoUrl = '',
     this.coverPhotoUrl = '',

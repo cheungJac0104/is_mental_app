@@ -85,11 +85,12 @@ extension PubChallengeApi on ApiService {
   }
 
   Future<Response> updateChallengeProgress(
-    String userId,
-    String publicId,
-    String entryId,
-    Map<String, dynamic> progressData,
-  ) async {
+      String userId,
+      String publicId,
+      String entryId,
+      int progressData,
+      String? shareUserId,
+      bool isShared) async {
     return _pubChallengeRequest(
       operation: 'updateChallengeProgress',
       data: {
@@ -97,6 +98,8 @@ extension PubChallengeApi on ApiService {
         'publicId': publicId,
         'entryId': entryId,
         'progressData': progressData,
+        'shareUserId': shareUserId,
+        'isShared': isShared
       },
     );
   }
