@@ -142,7 +142,7 @@ class LoginScreenState extends State<LoginScreen> {
   Widget _mainCanvas() {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Welix',
+        title: Text('Heartbour',
             style: TwTextStyles.heading1(context).copyWith(
               fontFamily: 'Pacifico',
               color: TwColors.text(context),

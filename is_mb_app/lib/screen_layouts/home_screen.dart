@@ -112,7 +112,7 @@ class HomeScreenState extends State<HomeScreen> {
     double bubbleSize = 150;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Welix - $user',
+        title: Text('Heartbour - $user',
             style: TwTextStyles.heading1(context).copyWith(
               fontFamily: 'Pacifico',
               color: TwColors.text(context),
